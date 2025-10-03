@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from functions.get_files_info import get_files_info
+
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -43,6 +45,8 @@ def main():
     else:
         print(f"Response: {response.text}")
 
-    
-if __name__ == "__main__":
-    main()
+
+print(get_files_info("calculator", "bin"))
+
+# if __name__ == "__main__":
+#     main()

@@ -18,7 +18,7 @@ def get_files_info(working_directory, directory="."):
         content_path = os.path.join(full_path, content)
         is_dir = os.path.isdir(content_path)
         size = os.path.getsize(content_path)
-        final_response += f"- {content}: file_size={size} bytes, is_dir={is_dir}\n"
+        final_response += f"- {content}: file_size={size} bytes, is_dir={is_dir} \n"
     return final_response
 
 schema_get_files_info = types.FunctionDeclaration(

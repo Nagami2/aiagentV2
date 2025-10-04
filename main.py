@@ -12,6 +12,8 @@ from functions.get_file_content import schema_get_file_content
 from functions.write_file import schema_write_file
 from functions.run_python_file import schema_run_python_file
 
+from call_function import call_function
+
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -65,15 +67,22 @@ def main():
             system_instruction=system_prompt),
     )
 
-    if response.function_calls:
-        for function_call in response.function_calls:
-            print(f"Function Call: {function_call.name} with arguments {function_call.args}")
-
+    if response is None or response.usage_metadata is None:
+        print("Error: response is malformed or missing usage metadata")
+        return
+    
     if verbose_flag:
-        print(f"Response: {response.text}")
+        print(f"User prompt: {user_prompt}")
         print(f"Prompt Token Count: {response.usage_metadata.prompt_token_count}")
         print(f"Response Token Count: {response.usage_metadata.candidates_token_count}")
 
+    if response.function_calls:
+        for function_call_part in response.function_calls:
+            function_call_result = call_function(function_call_part, verbose_flag)
+            if function_call_result.parts[0].function_response.response:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+            # else:
+            #     raise ValueError("Function call did not return a response")
     else:
         print(f"Response: {response.text}")
 

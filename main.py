@@ -39,6 +39,9 @@ def main():
     - Execute Python files with optional arguments
     - Write or overwrite files
 
+    when the user asks about the code project, they are referring to the working directory.
+    So, you should typically start by looking at the project's files, and figuring out how to run the project and how to run its tests.
+    you will always want to test the tests and actual project to verify that the behaviour is working.
     All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
     """
 
@@ -58,33 +61,39 @@ def main():
         ]
     )
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions],            
-            system_instruction=system_prompt),
-    )
+    for _ in range(20):
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions],            
+                system_instruction=system_prompt),
+        )
 
-    if response is None or response.usage_metadata is None:
-        print("Error: response is malformed or missing usage metadata")
-        return
-    
-    if verbose_flag:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt Token Count: {response.usage_metadata.prompt_token_count}")
-        print(f"Response Token Count: {response.usage_metadata.candidates_token_count}")
+        if response is None or response.usage_metadata is None:
+            print("Error: response is malformed or missing usage metadata")
+            return
+        
+        # if verbose_flag:
+        #     print(f"User prompt: {user_prompt}")
+        #     print(f"Prompt Token Count: {response.usage_metadata.prompt_token_count}")
+        #     print(f"Response Token Count: {response.usage_metadata.candidates_token_count}")
 
-    if response.function_calls:
-        for function_call_part in response.function_calls:
-            function_call_result = call_function(function_call_part, verbose_flag)
-            if function_call_result.parts[0].function_response.response:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-            # else:
-            #     raise ValueError("Function call did not return a response")
-    else:
-        print(f"Response: {response.text}")
+        if response.candidates:
+            for candidate in response.candidates:
+                messages.append(candidate.content)
+
+        if response.function_calls:
+            for function_call_part in response.function_calls:
+                function_call_result = call_function(function_call_part, verbose_flag)
+                # if function_call_result.parts[0].function_response.response:
+                #     print(f"-> {function_call_result.parts[0].function_response.response}")
+                messages.append(function_call_result)
+        else:
+            # final agent text message
+            print(f"Response: {response.text}")
+            return 
 
 
 if __name__ == "__main__":
